@@ -2,35 +2,9 @@ import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// CITY ASPECTS
-// Used to guide the AI's "lens" for concept generation.
-// We rotate through these to ensure semantic variety.
-const CITY_ASPECTS = [
-  {
-    dimension: "iconic-landmark",
-    instruction: "A famous building, statue, or physical structure. Focus on a single architectural element."
-  },
-  {
-    dimension: "local-food",
-    instruction: "A specific local dish, street food, or beverage. Focus on a single serving."
-  },
-  {
-    dimension: "local-fauna",
-    instruction: "A local animal, pest, or pet associated with the city (e.g., NYC rat, Tokyo Shiba Inu)."
-  },
-  {
-    dimension: "transportation",
-    instruction: "A vehicle or mode of transit specific to this city (e.g., Yellow Cab, Gondola, Tuk-Tuk)."
-  },
-  {
-    dimension: "street-object",
-    instruction: "A small object found on the street (e.g., Fire Hydrant, Postbox, Street Sign)."
-  },
-  {
-    dimension: "local-stereotype",
-    instruction: "A humorous caricature of a typical local resident or tourist behavior."
-  }
-];
+// CITY ASPECTS REMOVED
+// We now rely on the user's prompt directly for the subject.
+
 
 
 const STYLES = [ 
@@ -118,12 +92,12 @@ const processImageWithTransparency = (imageSrc: string): Promise<string> => {
  * STEP 1: GENERATE CONCEPT (Text Model)
  * Generates a specific subject description, checking history to avoid repetition.
  */
-const generateConcept = async (city: string, aspect: typeof CITY_ASPECTS[0], history: string[]): Promise<string> => {
+const generateConcept = async (userPrompt: string, history: string[]): Promise<string> => {
     const prompt = `
         Role: Creative Director for a funny sticker app.
         Task: Brainstorm ONE specific visual subject for a sticker.
         
-        Subject: ${city}
+        User Request: ${userPrompt}
         
         AVOID these concepts (already generated):
         ${history.map(h => `- ${h}`).join('\n')}
@@ -131,7 +105,7 @@ const generateConcept = async (city: string, aspect: typeof CITY_ASPECTS[0], his
         Rules:
         1. Return ONLY the short visual description (max 10 words).
         2. Be specific (e.g., instead of "Pizza", say "A slice of pepperoni pizza dripping cheese").
-        3. Make it funny or iconic.
+        3. Make it funny, iconic, or cute based on the request.
         4. Do NOT repeat anything from the avoidance list.
     `;
 
@@ -142,25 +116,23 @@ const generateConcept = async (city: string, aspect: typeof CITY_ASPECTS[0], his
         });
         return response.text.trim();
     } catch (e) {
-        console.error("Concept generation failed, falling back to generic aspect", e);
-        return aspect.instruction;
+        console.error("Concept generation failed, falling back to raw prompt", e);
+        return userPrompt;
     }
 }
 
 /**
  * ORCHESTRATOR: Two-Step Generation
  */
-export const generateCitySticker = async (city: string, attemptIndex: number = 0, history: string[] = []): Promise<{imageUrl: string, concept: string}> => {
+export const generateSticker = async (userPrompt: string, generationCount: number = 0, history: string[] = []): Promise<{imageUrl: string, concept: string}> => {
   try {
     const imageModel = 'gemini-2.5-flash-image';
     
-    // Select Aspect based on rotation index
-    const aspect = CITY_ASPECTS[attemptIndex % CITY_ASPECTS.length];
     const seed = Date.now();
     
     // STEP 1: Generate a unique concept string
-    const conceptDescription = await generateConcept(city, aspect, history);
-    console.log(`Generated Concept for ${city} (${aspect.dimension}):`, conceptDescription);
+    const conceptDescription = await generateConcept(userPrompt, history);
+    console.log(`Generated Concept for "${userPrompt}":`, conceptDescription);
 
     const randomStyle = STYLES[Math.floor(Math.random() * STYLES.length)];
 
@@ -171,7 +143,7 @@ export const generateCitySticker = async (city: string, attemptIndex: number = 0
       Design a funny souvenir sticker.
       
       SUBJECT: ${conceptDescription}
-      CONTEXT: This is for the city of ${city}.
+      CONTEXT: The user asked for: ${userPrompt}.
       
       STYLE:
       - ${randomStyle}

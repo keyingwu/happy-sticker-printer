@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { generateCitySticker } from './services/geminiService';
+import { generateSticker } from './services/geminiService';
 import { Printer } from './components/Printer';
 import { PlacedSticker, DragItem } from './types';
 import JSZip from 'jszip';
@@ -18,7 +18,7 @@ const getClientCoords = (e: React.MouseEvent | React.TouchEvent | MouseEvent | T
 
 export default function App() {
   // Input State
-  const [city, setCity] = useState('');
+  const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState(false);
@@ -27,12 +27,12 @@ export default function App() {
   // We track how many times we've printed for the current input to cycle through categories
   const [generationCount, setGenerationCount] = useState(0);
   
-  // History State: Tracks concepts generated for the current city to avoid repetition
+  // History State: Tracks concepts generated for the current prompt to avoid repetition
   const [conceptHistory, setConceptHistory] = useState<string[]>([]);
   
   // Sticker State
-  // Changed from just string URL to object to track city name for downloads
-  const [freshSticker, setFreshSticker] = useState<{url: string, city: string} | null>(null);
+  // Changed from just string URL to object to track prompt for downloads
+  const [freshSticker, setFreshSticker] = useState<{url: string, prompt: string} | null>(null);
   const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
 
   // Drag State
@@ -42,7 +42,7 @@ export default function App() {
   // Generate Handler
   const handleGenerate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!city.trim() || loading) return;
+    if (!prompt.trim() || loading) return;
     
     setLoading(true);
     setError(null);
@@ -50,10 +50,10 @@ export default function App() {
 
     try {
       // Step 1 & 2: Call service with history
-      const { imageUrl, concept } = await generateCitySticker(city, generationCount, conceptHistory);
+      const { imageUrl, concept } = await generateSticker(prompt, generationCount, conceptHistory);
       
-      // Store city alongside url for filename generation
-      setFreshSticker({ url: imageUrl, city });
+      // Store prompt alongside url for filename generation
+      setFreshSticker({ url: imageUrl, prompt });
       
       // Increment count so the next click gets the next aspect category
       setGenerationCount(prev => prev + 1);
@@ -70,20 +70,20 @@ export default function App() {
   };
 
   // Input Change Handler
-  const handleCityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setCity(e.target.value);
-      // Reset the cycle and history when the user changes the city name
+  const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setPrompt(e.target.value);
+      // Reset the cycle and history when the user changes the prompt
       setGenerationCount(0);
       setConceptHistory([]);
   };
 
   // Download Handler (Single)
-  const downloadSticker = (url: string, cityName: string) => {
+  const downloadSticker = (url: string, promptName: string) => {
       const link = document.createElement('a');
       link.href = url;
       // Sanitize filename
-      const safeCity = cityName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-      link.download = `sticker-${safeCity}-${Date.now()}.png`;
+      const safeName = promptName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      link.download = `sticker-${safeName}-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -103,8 +103,8 @@ export default function App() {
               // sticker.url is "data:image/png;base64,..."
               // We need to strip the prefix to get the raw base64 string
               const base64Data = sticker.url.split(',')[1];
-              const safeCity = sticker.city.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-              const fileName = `sticker-${safeCity}-${index + 1}.png`;
+              const safeName = sticker.prompt.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+              const fileName = `sticker-${safeName}-${index + 1}.png`;
               
               folder.file(fileName, base64Data, { base64: true });
           });
@@ -193,7 +193,7 @@ export default function App() {
       const newSticker: PlacedSticker = {
           id: newId,
           url: freshSticker.url,
-          city: freshSticker.city,
+          prompt: freshSticker.prompt,
           x: printerX,
           y: printerY,
           rotation: Math.random() * 10 - 5, // Slight random rotation
@@ -281,7 +281,7 @@ export default function App() {
                     onTouchStart={(e) => e.stopPropagation()}
                     onClick={(e) => {
                         e.stopPropagation();
-                        downloadSticker(sticker.url, sticker.city);
+                        downloadSticker(sticker.url, sticker.prompt);
                     }}
                  >
                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
@@ -308,21 +308,21 @@ export default function App() {
                 loading={loading} 
                 freshSticker={freshSticker}
                 onStartDragFresh={startDragFresh}
-                onDownloadFresh={() => freshSticker && downloadSticker(freshSticker.url, freshSticker.city)}
+                onDownloadFresh={() => freshSticker && downloadSticker(freshSticker.url, freshSticker.prompt)}
             >
                 <form onSubmit={handleGenerate} className="flex gap-3">
                     <input
                         type="text"
-                        value={city}
-                        onChange={handleCityChange}
-                        placeholder="TYPE CITY..."
+                        value={prompt}
+                        onChange={handlePromptChange}
+                        placeholder="WHAT DO YOU WANT TO PRINT?"
                         className="flex-grow bg-white px-5 py-3 rounded-lg text-xl font-bold border-2 border-slate-300 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none uppercase tracking-wide placeholder-slate-300 text-slate-700"
                         disabled={loading}
                         autoFocus
                     />
                     <button
                         type="submit"
-                        disabled={loading || !city}
+                        disabled={loading || !prompt}
                         className={`px-6 py-3 rounded-lg text-white font-black text-lg uppercase tracking-widest transition-all transform active:scale-95 ${loading ? 'bg-slate-400 shadow-none cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 shadow-xl hover:shadow-2xl hover:-translate-y-1'}`}
                     >
                         {loading ? '...' : 'PRINT'}

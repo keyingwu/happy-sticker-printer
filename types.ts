@@ -1,14 +1,14 @@
 export interface StickerState {
   imageUrl: string | null;
   loading: boolean;
-  city: string;
+  prompt: string;
   error: string | null;
 }
 
 export interface PlacedSticker {
   id: string;
   url: string;
-  city: string;
+  prompt: string;
   x: number;
   y: number;
   rotation: number;
