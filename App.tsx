@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { generateSticker } from './services/geminiService';
+import { generateSticker, STYLES } from './services/geminiService';
 import { Printer } from './components/Printer';
 import { PlacedSticker, DragItem } from './types';
 import JSZip from 'jszip';
@@ -19,6 +19,7 @@ const getClientCoords = (e: React.MouseEvent | React.TouchEvent | MouseEvent | T
 export default function App() {
   // Input State
   const [prompt, setPrompt] = useState('');
+  const [selectedStyle, setSelectedStyle] = useState(STYLES[0]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState(false);
@@ -50,7 +51,7 @@ export default function App() {
 
     try {
       // Step 1 & 2: Call service with history
-      const { imageUrl, concept } = await generateSticker(prompt, generationCount, conceptHistory);
+      const { imageUrl, concept } = await generateSticker(prompt, selectedStyle, generationCount, conceptHistory);
       
       // Store prompt alongside url for filename generation
       setFreshSticker({ url: imageUrl, prompt });
@@ -320,6 +321,18 @@ export default function App() {
                         disabled={loading}
                         autoFocus
                     />
+                    <select
+                        value={selectedStyle}
+                        onChange={(e) => setSelectedStyle(e.target.value)}
+                        className="bg-white px-4 py-3 rounded-lg text-sm font-bold border-2 border-slate-300 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none uppercase tracking-wide text-slate-700 w-48"
+                        disabled={loading}
+                    >
+                        {STYLES.map((style) => (
+                            <option key={style} value={style}>
+                                {style.replace(/ style| illustration| sticker/gi, '')}
+                            </option>
+                        ))}
+                    </select>
                     <button
                         type="submit"
                         disabled={loading || !prompt}

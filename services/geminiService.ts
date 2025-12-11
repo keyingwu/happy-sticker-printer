@@ -7,7 +7,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 
 
-const STYLES = [ 
+export const STYLES = [ 
   "classic bold vector sticker", 
   "satirical caricature illustration", 
   "funny cartoon style", 
@@ -124,7 +124,7 @@ const generateConcept = async (userPrompt: string, history: string[]): Promise<s
 /**
  * ORCHESTRATOR: Two-Step Generation
  */
-export const generateSticker = async (userPrompt: string, generationCount: number = 0, history: string[] = []): Promise<{imageUrl: string, concept: string}> => {
+export const generateSticker = async (userPrompt: string, style: string, generationCount: number = 0, history: string[] = []): Promise<{imageUrl: string, concept: string}> => {
   try {
     const imageModel = 'gemini-2.5-flash-image';
     
@@ -134,7 +134,7 @@ export const generateSticker = async (userPrompt: string, generationCount: numbe
     const conceptDescription = await generateConcept(userPrompt, history);
     console.log(`Generated Concept for "${userPrompt}":`, conceptDescription);
 
-    const randomStyle = STYLES[Math.floor(Math.random() * STYLES.length)];
+    const chosenStyle = style || STYLES[Math.floor(Math.random() * STYLES.length)];
 
     // STEP 2: Generate the image based on that concept
     // We ask for a SOLID BLACK background so we can computationally remove it later.
@@ -146,7 +146,8 @@ export const generateSticker = async (userPrompt: string, generationCount: numbe
       CONTEXT: The user asked for: ${userPrompt}.
       
       STYLE:
-      - ${randomStyle}
+      STYLE:
+      - ${chosenStyle}
       - Vector Art style (clean lines, flat colors).
       - Funny, slightly caricatured.
       
