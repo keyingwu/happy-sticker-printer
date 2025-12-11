@@ -233,7 +233,7 @@ export default function App() {
           {placedStickers.map(sticker => (
               <div
                 key={sticker.id}
-                className="absolute cursor-grab active:cursor-grabbing group"
+                className="absolute cursor-grab active:cursor-grabbing group before:absolute before:-inset-4 before:content-[''] before:z-[-1]"
                 style={{
                     left: sticker.x,
                     top: sticker.y,
@@ -338,7 +338,7 @@ export default function App() {
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Style" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-white">
                                     {STYLES.map((style) => (
                                         <SelectItem key={style} value={style} className="uppercase font-bold text-xs">
                                             {style.replace(/ style| illustration| sticker/gi, '')}

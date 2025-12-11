@@ -47,7 +47,7 @@ This is an AI-powered sticker generator built with React 19, TypeScript, Vite, a
 
 ### Styling
 
-- Tailwind CSS with shadcn/ui components (New York style)
+- Tailwind CSS with shadcn/ui components (New York style). DON't change the default shadcn/ui components.
 - Custom desk pattern defined in `index.html`
 - Drop-shadow filters for sticker depth effect
 - Custom `print-emerge` keyframe animation in Printer component

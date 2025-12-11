@@ -8,11 +8,27 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 
 export const STYLES = [ 
-  "classic bold vector sticker", 
-  "satirical caricature illustration", 
-  "funny cartoon style", 
-  "bold line art with flat colors", 
-  "retro souvenir decal style" 
+  "classic bold vector sticker",              // 经典粗犷矢量贴纸
+  "satirical caricature illustration",        // 讽刺漫画插画
+  "funny cartoon style",                      // 搞笑卡通
+  "bold line art with flat colors",           // 粗线条 + 纯色色块
+
+  // 新增风格：
+  "minimalist flat icon",                     // 极简扁平图标
+  "cute pastel chibi character",              // 粉彩Q版角色
+  "kawaii doodle sketch",                     // 可爱手绘涂鸦
+  "90s retro comic halftone",                 // 90年代复古网点漫画风
+  "neon cyberpunk glow sticker",              // 霓虹赛博朋克发光贴纸
+  "hand-drawn pencil sketch with color accents", // 铅笔手绘+少量点色
+  "watercolor splash illustration",           // 水彩泼墨插画
+  "graffiti street art sticker",              // 涂鸦街头艺术贴纸
+  "3D plastic toy render",                    // 3D塑料玩具感渲染
+  "pixel art sprite",                         // 像素小人/像素画风格
+  "bold typographic slogan sticker",          // 粗体字标语贴纸
+  "vintage hand-lettered badge",              // 复古手写字徽章
+  "chrome gradient Y2K style",                // 镀铬渐变Y2K风
+  "holographic foil sticker style",           // 全息亮膜贴纸风
+  "childlike crayon drawing",                 // 儿童蜡笔画风
 ];
 
 /**
@@ -110,6 +126,10 @@ const generateConcept = async (userPrompt: string, history: string[]): Promise<s
     `;
 
     try {
+        console.log("--- Concept Generation Prompt ---");
+        console.log(prompt);
+        console.log("---------------------------------");
+
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt
@@ -140,14 +160,13 @@ export const generateSticker = async (userPrompt: string, style: string, generat
     // We ask for a SOLID BLACK background so we can computationally remove it later.
     // We ask for a THICK WHITE BORDER to create the die-cut physical object look.
     const imagePrompt = `
-      Design a funny souvenir sticker.
+      Design a funny sticker.
       
       SUBJECT: ${conceptDescription}
       CONTEXT: The user asked for: ${userPrompt}.
       
       STYLE:
       - ${chosenStyle}
-      - Vector Art style (clean lines, flat colors).
       
       DIE-CUT LAYOUT (CRITICAL):
       1. THICK WHITE OUTLINE around the entire subject (Sticker Border).
@@ -157,6 +176,10 @@ export const generateSticker = async (userPrompt: string, style: string, generat
       
       Seed: ${seed}
     `;
+
+    console.log("--- Image Generation Prompt ---");
+    console.log(imagePrompt);
+    console.log("-------------------------------");
 
     const response = await ai.models.generateContent({
       model: imageModel,
