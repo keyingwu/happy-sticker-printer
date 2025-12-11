@@ -85,7 +85,7 @@ export default function App() {
       const link = document.createElement('a');
       link.href = url;
       // Sanitize filename
-      const safeName = promptName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+      const safeName = promptName.replace(/[<>:"/\\|?*\x00-\x1F]/g, '-').trim();
       link.download = `sticker-${safeName}-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
@@ -106,7 +106,7 @@ export default function App() {
               // sticker.url is "data:image/png;base64,..."
               // We need to strip the prefix to get the raw base64 string
               const base64Data = sticker.url.split(',')[1];
-              const safeName = sticker.prompt.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+              const safeName = sticker.prompt.replace(/[<>:"/\\|?*\x00-\x1F]/g, '-').trim();
               const fileName = `sticker-${safeName}-${index + 1}.png`;
               
               folder.file(fileName, base64Data, { base64: true });

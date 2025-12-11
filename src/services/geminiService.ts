@@ -1,6 +1,90 @@
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+type UsageMetadata = {
+  promptTokenCount?: number;
+  candidatesTokenCount?: number;
+  totalTokenCount?: number;
+};
+
+// Approximate pricing for common models (USD per 1M tokens).
+// Numbers are based on current Gemini API pricing docs but may change.
+// Always check https://ai.google.dev/gemini-api/docs/pricing for up-to-date values.
+const MODEL_PRICING: Record<
+  string,
+  { inputPerMTokens: number; outputPerMTokens: number }
+> = {
+  // Text model for concept generation
+  "gemini-2.5-flash": {
+    inputPerMTokens: 0.3, // approx
+    outputPerMTokens: 2.5, // approx
+  },
+  // Image models charge per image, but text input/output is priced like 2.5 Flash.
+  "gemini-2.5-flash-image": {
+    inputPerMTokens: 0.3, // approx
+    outputPerMTokens: 2.5, // approx
+  },
+  "gemini-3-pro-image-preview": {
+    // Text I/O is priced like Gemini 3 Pro.
+    inputPerMTokens: 2.0, // approx, small prompts so difference is minimal
+    outputPerMTokens: 10.0, // approx
+  },
+};
+
+const estimateCostUSD = (model: string, usage?: UsageMetadata | null) => {
+  if (!usage) return null;
+  const pricing = MODEL_PRICING[model];
+  if (!pricing) return null;
+
+  const inputTokens = usage.promptTokenCount ?? 0;
+  const outputTokens = usage.candidatesTokenCount ?? 0;
+  const totalTokens =
+    usage.totalTokenCount ?? inputTokens + outputTokens;
+
+  const inputCost =
+    (inputTokens / 1_000_000) * pricing.inputPerMTokens;
+  const outputCost =
+    (outputTokens / 1_000_000) * pricing.outputPerMTokens;
+
+  return {
+    inputTokens,
+    outputTokens,
+    totalTokens,
+    inputCost,
+    outputCost,
+    totalCost: inputCost + outputCost,
+  };
+};
+
+const logUsageAndCost = (
+  label: string,
+  model: string,
+  response: any
+) => {
+  const usage: UsageMetadata | undefined =
+    response?.usageMetadata ?? response?.response?.usageMetadata;
+
+  console.log("[Gemini usage]", label, {
+    model,
+    usage,
+  });
+
+  const est = estimateCostUSD(model, usage ?? null);
+  if (est) {
+    console.log("[Gemini approx cost]", label, {
+      model,
+      inputTokens: est.inputTokens,
+      outputTokens: est.outputTokens,
+      totalTokens: est.totalTokens,
+      inputCostUSD: est.inputCost.toFixed(6),
+      outputCostUSD: est.outputCost.toFixed(6),
+      totalCostUSD: est.totalCost.toFixed(6),
+      note:
+        "Approximate only — see https://ai.google.dev/gemini-api/docs/pricing for official pricing.",
+    });
+  }
+};
 export const STYLES = [ 
   "classic bold vector sticker",              // 经典粗犷矢量贴纸
   "satirical caricature illustration",        // 讽刺漫画插画
@@ -23,6 +107,8 @@ export const STYLES = [
   "chrome gradient Y2K style",                // 镀铬渐变Y2K风
   "holographic foil sticker style",           // 全息亮膜贴纸风
   "childlike crayon drawing",                 // 儿童蜡笔画风
+  "vintage style",                          // 复古风
+  "photo-realistic",                        // 真实照片风
 ];
 
 /**
@@ -124,10 +210,14 @@ const generateConcept = async (userPrompt: string, history: string[]): Promise<s
         console.log(prompt);
         console.log("---------------------------------");
 
+        const modelName = 'gemini-2.5-flash';
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: modelName,
             contents: prompt
         });
+
+        logUsageAndCost("concept_generation", modelName, response);
+
         return response.text.trim();
     } catch (e) {
         console.error("Concept generation failed, falling back to raw prompt", e);
@@ -180,11 +270,16 @@ export const generateSticker = async (userPrompt: string, style: string, generat
           
           STYLE:
           - ${chosenStyle}
+          - Digital art source file (NOT a photograph).
                     
           LAYOUT:
-          - Canvas aspect ratio 10:16 (vertical).
+          - Canvas aspect ratio 10:14 (vertical).
           - Clean spacing between stickers.
           - designed background
+          
+          NEGATIVE CONSTRAINTS (CRITICAL):
+          - NO headers, NO footers, NO title bars.
+          - NO watermarks, NO source file labels.
 
           Seed: ${seed}
         `;
@@ -214,7 +309,7 @@ export const generateSticker = async (userPrompt: string, style: string, generat
 
     const config = (isBatch && imageModel === IMAGE_MODELS.PRO_PREVIEW) ? {
         imageConfig: {
-            aspectRatio: '9:16',
+            // aspectRatio: '9:16',
             imageSize: '2K'
         }
     } : undefined;
@@ -226,6 +321,8 @@ export const generateSticker = async (userPrompt: string, style: string, generat
       },
       config
     });
+
+    logUsageAndCost("image_generation", imageModel, response);
 
     let rawImageUrl = '';
 
