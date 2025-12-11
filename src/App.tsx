@@ -2,7 +2,12 @@ import React, { useState, useRef } from 'react';
 import { generateSticker, STYLES } from './services/geminiService';
 import { Printer } from './components/Printer';
 import { PlacedSticker, DragItem } from './types';
+
 import JSZip from 'jszip';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card } from '@/components/ui/card';
 
 // Helper to normalize mouse and touch coordinates
 const getClientCoords = (e: React.MouseEvent | React.TouchEvent | MouseEvent | TouchEvent) => {
@@ -70,13 +75,7 @@ export default function App() {
     }
   };
 
-  // Input Change Handler
-  const handlePromptChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setPrompt(e.target.value);
-      // Reset the cycle and history when the user changes the prompt
-      setGenerationCount(0);
-      setConceptHistory([]);
-  };
+
 
   // Download Handler (Single)
   const downloadSticker = (url: string, promptName: string) => {
@@ -311,35 +310,45 @@ export default function App() {
                 onStartDragFresh={startDragFresh}
                 onDownloadFresh={() => freshSticker && downloadSticker(freshSticker.url, freshSticker.prompt)}
             >
-                <form onSubmit={handleGenerate} className="flex gap-3">
-                    <input
-                        type="text"
-                        value={prompt}
-                        onChange={handlePromptChange}
-                        placeholder="WHAT DO YOU WANT TO PRINT?"
-                        className="flex-grow bg-white px-5 py-3 rounded-lg text-xl font-bold border-2 border-slate-300 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none uppercase tracking-wide placeholder-slate-300 text-slate-700"
-                        disabled={loading}
-                        autoFocus
-                    />
-                    <select
-                        value={selectedStyle}
-                        onChange={(e) => setSelectedStyle(e.target.value)}
-                        className="bg-white px-4 py-3 rounded-lg text-sm font-bold border-2 border-slate-300 focus:ring-4 focus:ring-indigo-500/30 focus:border-indigo-500 outline-none uppercase tracking-wide text-slate-700 w-48"
-                        disabled={loading}
-                    >
-                        {STYLES.map((style) => (
-                            <option key={style} value={style}>
-                                {style.replace(/ style| illustration| sticker/gi, '')}
-                            </option>
-                        ))}
-                    </select>
-                    <button
+                <form onSubmit={handleGenerate} className="flex gap-3 items-center">
+                    <div className="flex-grow flex gap-2">
+                        <Input
+                            type="text"
+                            value={prompt}
+                            onChange={(e) => {
+                                setPrompt(e.target.value);
+                                setGenerationCount(0);
+                                setConceptHistory([]);
+                            }}
+                            placeholder="WHAT DO YOU WANT TO PRINT?"
+                            className="flex-grow bg-white text-lg font-bold border-2 border-slate-300 focus-visible:ring-indigo-500 uppercase tracking-wide placeholder:text-slate-300 text-slate-700 h-12"
+                            disabled={loading}
+                            autoFocus
+                        />
+                        <Select
+                            value={selectedStyle}
+                            onValueChange={setSelectedStyle}
+                            disabled={loading}
+                        >
+                            <SelectTrigger className="w-[200px] h-12 bg-white border-2 border-slate-300 font-bold uppercase tracking-wide text-slate-700">
+                                <SelectValue placeholder="Style" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {STYLES.map((style) => (
+                                    <SelectItem key={style} value={style} className="uppercase font-bold text-xs">
+                                        {style.replace(/ style| illustration| sticker/gi, '')}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button
                         type="submit"
                         disabled={loading || !prompt}
-                        className={`px-6 py-3 rounded-lg text-white font-black text-lg uppercase tracking-widest transition-all transform active:scale-95 ${loading ? 'bg-slate-400 shadow-none cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-500 shadow-xl hover:shadow-2xl hover:-translate-y-1'}`}
+                        className={`h-12 px-8 text-lg font-black uppercase tracking-widest transition-all ${loading ? 'bg-slate-400' : 'bg-indigo-600 hover:bg-indigo-500 shadow-xl hover:shadow-2xl hover:-translate-y-1'}`}
                     >
                         {loading ? '...' : 'PRINT'}
-                    </button>
+                    </Button>
                 </form>
                 {error && <div className="text-xs text-red-500 mt-2 font-bold text-center tracking-wide">{error}</div>}
             </Printer>
