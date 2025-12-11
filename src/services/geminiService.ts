@@ -146,48 +146,85 @@ export const IMAGE_MODELS = {
 /**
  * ORCHESTRATOR: Two-Step Generation
  */
-export const generateSticker = async (userPrompt: string, style: string, generationCount: number = 0, history: string[] = [], customImageModel: string = IMAGE_MODELS.FLASH): Promise<{imageUrl: string, concept: string}> => {
+export const generateSticker = async (userPrompt: string, style: string, generationCount: number = 0, history: string[] = [], customImageModel: string = IMAGE_MODELS.FLASH, isBatch: boolean = false): Promise<{imageUrl: string, concept: string}> => {
   try {
     const imageModel = customImageModel;
     
     const seed = Date.now();
     
-    // STEP 1: Generate a unique concept string
-    const conceptDescription = await generateConcept(userPrompt, history);
-    console.log(`Generated Concept for "${userPrompt}":`, conceptDescription);
+    // STEP 1: Generate a unique concept string (Skip for Batch Mode to save time/tokens)
+    let conceptDescription = userPrompt;
+    if (!isBatch) {
+        conceptDescription = await generateConcept(userPrompt, history);
+        console.log(`Generated Concept for "${userPrompt}":`, conceptDescription);
+    }
 
     const chosenStyle = style || STYLES[Math.floor(Math.random() * STYLES.length)];
 
     // STEP 2: Generate the image based on that concept
     // We ask for a SOLID BLACK background so we can computationally remove it later.
     // We ask for a THICK WHITE BORDER to create the die-cut physical object look.
-    const imagePrompt = `
-      Design a funny sticker.
-      
-      SUBJECT: ${conceptDescription}
-      CONTEXT: The user asked for: ${userPrompt}.
-      
-      STYLE:
-      - ${chosenStyle}
-      
-      DIE-CUT LAYOUT (CRITICAL):
-      1. THICK WHITE OUTLINE around the entire subject (Sticker Border).
-      2. SOLID BLACK (#000000) background.
-      3. High contrast.
-      4. Center the subject. No cropping.
-      
-      Seed: ${seed}
-    `;
+    
+    let imagePrompt = '';
+
+    if (isBatch) {
+        imagePrompt = `
+          Design a full sticker sheet.
+          
+          SUBJECT: ${userPrompt}
+          
+          CONTENT:
+          - Exactly 9 distinct die-cutstickers arranged in a neat 3x3 grid.
+          - Show various poses, outfits, and expressions.
+          - Maintain consistent character design and style.
+          
+          STYLE:
+          - ${chosenStyle}
+                    
+          LAYOUT:
+          - Canvas aspect ratio 10:16 (vertical).
+          - Clean spacing between stickers.
+          - designed background
+
+          Seed: ${seed}
+        `;
+    } else {
+        imagePrompt = `
+          Design a funny sticker.
+          
+          SUBJECT: ${conceptDescription}
+          CONTEXT: The user asked for: ${userPrompt}.
+          
+          STYLE:
+          - ${chosenStyle}
+          
+          DIE-CUT LAYOUT (CRITICAL):
+          1. THICK WHITE OUTLINE around the entire subject (Sticker Border).
+          2. SOLID BLACK (#000000) background.
+          3. High contrast.
+          4. Center the subject. No cropping.
+          
+          Seed: ${seed}
+        `;
+    }
 
     console.log("--- Image Generation Prompt ---");
     console.log(imagePrompt);
     console.log("-------------------------------");
 
+    const config = (isBatch && imageModel === IMAGE_MODELS.PRO_PREVIEW) ? {
+        imageConfig: {
+            aspectRatio: '9:16',
+            imageSize: '2K'
+        }
+    } : undefined;
+
     const response = await ai.models.generateContent({
       model: imageModel,
       contents: {
         parts: [{ text: imagePrompt }]
-      }
+      },
+      config
     });
 
     let rawImageUrl = '';

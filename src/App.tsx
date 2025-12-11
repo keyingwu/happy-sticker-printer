@@ -26,6 +26,7 @@ export default function App() {
   const [prompt, setPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0]);
   const [selectedModel, setSelectedModel] = useState(IMAGE_MODELS.FLASH);
+  const [isBatchMode, setIsBatchMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState(false);
@@ -57,7 +58,7 @@ export default function App() {
 
     try {
       // Step 1 & 2: Call service with history
-      const { imageUrl, concept } = await generateSticker(prompt, selectedStyle, generationCount, conceptHistory, selectedModel);
+      const { imageUrl, concept } = await generateSticker(prompt, selectedStyle, generationCount, conceptHistory, selectedModel, isBatchMode);
       
       // Store prompt alongside url for filename generation
       setFreshSticker({ url: imageUrl, prompt });
@@ -234,7 +235,7 @@ export default function App() {
           {placedStickers.map(sticker => (
               <div
                 key={sticker.id}
-                className="absolute cursor-grab active:cursor-grabbing group before:absolute before:-inset-4 before:content-[''] before:z-[-1]"
+                className="absolute cursor-grab active:cursor-grabbing group before:absolute before:-inset-12 before:content-[''] before:z-[-1]"
                 style={{
                     left: sticker.x,
                     top: sticker.y,
@@ -328,21 +329,41 @@ export default function App() {
                         />
                     </div>
                     
-                    {/* Row 1.5: Model Switcher */}
-                    <div className="w-full">
-                        <Select
-                            value={selectedModel}
-                            onValueChange={setSelectedModel}
-                            disabled={loading}
-                        >
-                            <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-7 text-xs text-slate-500">
-                                <SelectValue placeholder="Model" />
-                            </SelectTrigger>
-                            <SelectContent className="bg-white">
-                                 <SelectItem value={IMAGE_MODELS.FLASH} className="text-xs">Flash (Faster)</SelectItem>
-                                 <SelectItem value={IMAGE_MODELS.PRO_PREVIEW} className="text-xs">Pro (Better Quality)</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    {/* Row 1.5: Model Switcher & Mode Switcher */}
+                    <div className="flex gap-3 w-full">
+                        {/* Model Select */}
+                        <div className="flex-1 min-w-0">
+                            <Select
+                                value={selectedModel}
+                                onValueChange={setSelectedModel}
+                                disabled={loading}
+                            >
+                                <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-7 text-xs text-slate-500">
+                                    <SelectValue placeholder="Model" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                     <SelectItem value={IMAGE_MODELS.FLASH} className="text-xs">Flash (Faster)</SelectItem>
+                                     <SelectItem value={IMAGE_MODELS.PRO_PREVIEW} className="text-xs">Pro (Better Quality)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Mode Select (Single vs Batch) */}
+                         <div className="flex-1 min-w-0">
+                            <Select
+                                value={isBatchMode ? 'batch' : 'single'}
+                                onValueChange={(v) => setIsBatchMode(v === 'batch')}
+                                disabled={loading}
+                            >
+                                <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-7 text-xs text-slate-500">
+                                    <SelectValue placeholder="Mode" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-white">
+                                     <SelectItem value="single" className="text-xs">Single Sticker</SelectItem>
+                                     <SelectItem value="batch" className="text-xs">Batch Sheet (9x)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
 
                     {/* Row 2: Style Select & Print Button */}
