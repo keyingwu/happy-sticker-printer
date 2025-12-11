@@ -105,7 +105,7 @@ const generateConcept = async (userPrompt: string, history: string[]): Promise<s
         Rules:
         1. Return ONLY the short visual description (max 10 words).
         2. Be specific (e.g., instead of "Pizza", say "A slice of pepperoni pizza dripping cheese").
-        3. Make it funny, iconic, or cute based on the request.
+        3. Make it funny or cute based on the request.
         4. Do NOT repeat anything from the avoidance list.
     `;
 
@@ -146,10 +146,8 @@ export const generateSticker = async (userPrompt: string, style: string, generat
       CONTEXT: The user asked for: ${userPrompt}.
       
       STYLE:
-      STYLE:
       - ${chosenStyle}
       - Vector Art style (clean lines, flat colors).
-      - Funny, slightly caricatured.
       
       DIE-CUT LAYOUT (CRITICAL):
       1. THICK WHITE OUTLINE around the entire subject (Sticker Border).
