@@ -174,7 +174,7 @@ export const generateSticker = async (userPrompt: string, style: string, generat
           SUBJECT: ${userPrompt}
           
           CONTENT:
-          - Exactly 9 distinct die-cutstickers arranged in a neat 3x3 grid.
+          - Exactly 9 distinct die-cut stickers with white border arranged in a neat 3x3 grid.
           - Show various poses, outfits, and expressions.
           - Maintain consistent character design and style.
           
@@ -240,7 +240,8 @@ export const generateSticker = async (userPrompt: string, style: string, generat
     }
 
     if (!rawImageUrl) {
-      throw new Error("No image data found in response");
+      console.error("Gemini API Response missing image data. Model response:", JSON.stringify(response, null, 2));
+      throw new Error("No image data found in response - Check console for full API response");
     }
 
     // Process the image to make it transparent

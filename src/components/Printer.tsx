@@ -10,7 +10,7 @@ interface PrinterProps {
 
 export const Printer: React.FC<PrinterProps> = ({ loading, children, freshSticker, onStartDragFresh, onDownloadFresh }) => {
   return (
-    <div className="relative w-full max-w-xl mx-auto z-50 select-none">
+    <div className="relative w-full max-w-xl mx-auto z-50 select-none pointer-events-auto">
 
       {/* Outer Container with Ground Shadow */}
       <div

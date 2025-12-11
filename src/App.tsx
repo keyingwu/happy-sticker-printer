@@ -42,6 +42,7 @@ export default function App() {
   // Changed from just string URL to object to track prompt for downloads
   const [freshSticker, setFreshSticker] = useState<{url: string, prompt: string} | null>(null);
   const [placedStickers, setPlacedStickers] = useState<PlacedSticker[]>([]);
+  const [zoomedSticker, setZoomedSticker] = useState<PlacedSticker | null>(null);
 
   // Drag State
   const [dragItem, setDragItem] = useState<DragItem | null>(null);
@@ -129,6 +130,26 @@ export default function App() {
   // Delete Handler
   const deleteSticker = (id: string) => {
       setPlacedStickers(prev => prev.filter(sticker => sticker.id !== id));
+  };
+
+  // Scale (Zoom) Handlers for placed stickers
+  const adjustStickerScale = (id: string, delta: number) => {
+      const MIN_SCALE = 0.5;
+      const MAX_SCALE = 2.5;
+
+      setPlacedStickers(prev =>
+          prev.map(sticker =>
+              sticker.id === id
+                  ? {
+                        ...sticker,
+                        scale: Math.min(
+                            MAX_SCALE,
+                            Math.max(MIN_SCALE, sticker.scale + delta)
+                        ),
+                    }
+                  : sticker
+          )
+      );
   };
 
   // Drag Handlers
@@ -259,37 +280,92 @@ export default function App() {
                     draggable={false} 
                  />
                  
-                 {/* Delete Button (Visible on Hover - Top Left) */}
-                 <button 
-                    className="absolute -top-3 -left-3 bg-white text-slate-400 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-red-50 hover:text-red-600 hover:scale-110 z-20"
-                    title="Delete Sticker"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        deleteSticker(sticker.id);
-                    }}
-                 >
-                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                 {/* Delete & Download Buttons (Top Center) */}
+                 <div className="absolute -top-5 left-1/2 -translate-x-1/2 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 z-20">
+                    <button 
+                      className="bg-white text-slate-400 w-7 h-7 rounded-full shadow-lg flex items-center justify-center hover:bg-red-50 hover:text-red-600 hover:scale-110 transition-transform"
+                      title="Delete Sticker"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSticker(sticker.id);
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                     </svg>
-                 </button>
-
-                 {/* Download Button (Visible on Hover - Top Right) */}
-                 <button 
-                    className="absolute -top-3 -right-3 bg-white text-slate-600 p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600 hover:scale-110 z-20"
-                    title="Download Sticker"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        downloadSticker(sticker.url, sticker.prompt);
-                    }}
-                 >
-                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                      </svg>
+                    </button>
+                    <button 
+                      className="bg-white text-slate-600 w-7 h-7 rounded-full shadow-lg flex items-center justify-center hover:bg-blue-50 hover:text-blue-600 hover:scale-110 transition-transform"
+                      title="Download Sticker"
+                      onMouseDown={(e) => e.stopPropagation()}
+                      onTouchStart={(e) => e.stopPropagation()}
+                      onClick={(e) => {
+                          e.stopPropagation();
+                          downloadSticker(sticker.url, sticker.prompt);
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M12 9v6m0 0 3-3m-3 3-3-3" />
-                     </svg>
-                 </button>
+                      </svg>
+                    </button>
+                 </div>
+
+                 {/* Zoom Controls (Visible on Hover - Bottom Center) */}
+                 <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-20">
+                    <button
+                        type="button"
+                        className="bg-white text-slate-500 w-7 h-7 rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 hover:text-slate-700 hover:scale-110 transition-transform"
+                        title="Zoom Out"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            adjustStickerScale(sticker.id, -0.15);
+                        }}
+                    >
+                        <span className="text-base leading-none">−</span>
+                    </button>
+                    <button
+                        type="button"
+                        className="bg-white text-slate-500 w-7 h-7 rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 hover:text-slate-700 hover:scale-110 transition-transform"
+                        title="View Larger"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setZoomedSticker(sticker);
+                        }}
+                    >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          className="w-4 h-4"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <circle cx="11" cy="11" r="6" />
+                          <line x1="16" y1="16" x2="21" y2="21" />
+                        </svg>
+                    </button>
+                    <button
+                        type="button"
+                        className="bg-white text-slate-500 w-7 h-7 rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 hover:text-slate-700 hover:scale-110 transition-transform"
+                        title="Zoom In"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            adjustStickerScale(sticker.id, 0.15);
+                        }}
+                    >
+                        <span className="text-base leading-none">+</span>
+                    </button>
+                 </div>
               </div>
           ))}
 
@@ -305,7 +381,7 @@ export default function App() {
 
       {/* Printer Station (Fixed UI Layer) */}
       <div className="absolute top-0 left-0 right-0 pointer-events-none flex justify-center z-50 pt-4">
-        <div className="pointer-events-auto w-full px-4">
+        <div className="w-full px-4">
             <Printer 
                 loading={loading} 
                 freshSticker={freshSticker}
@@ -430,6 +506,45 @@ export default function App() {
                   </>
               )}
           </button>
+      )}
+
+      {/* Fullscreen Zoom Overlay */}
+      {zoomedSticker && (
+        <div
+          className="fixed inset-0 bg-black/70 flex items-center justify-center z-[100]"
+          onClick={() => setZoomedSticker(null)}
+        >
+          <div
+            className="relative max-w-[80vw] max-h-[80vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={zoomedSticker.url}
+              alt={zoomedSticker.prompt || 'Sticker preview'}
+              className="max-w-full max-h-[80vh] object-contain rounded-xl bg-white shadow-2xl"
+            />
+            <button
+              type="button"
+              className="absolute -top-3 -right-3 bg-white text-slate-600 w-8 h-8 rounded-full shadow-lg flex items-center justify-center hover:bg-slate-50 hover:text-slate-800 hover:scale-110 transition-transform"
+              onClick={() => setZoomedSticker(null)}
+              title="Close"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="6" y1="18" x2="18" y2="6" />
+              </svg>
+            </button>
+          </div>
+        </div>
       )}
 
     </div>
