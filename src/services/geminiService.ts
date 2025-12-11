@@ -1,12 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-// CITY ASPECTS REMOVED
-// We now rely on the user's prompt directly for the subject.
-
-
-
 export const STYLES = [ 
   "classic bold vector sticker",              // 经典粗犷矢量贴纸
   "satirical caricature illustration",        // 讽刺漫画插画
@@ -144,9 +138,17 @@ const generateConcept = async (userPrompt: string, history: string[]): Promise<s
 /**
  * ORCHESTRATOR: Two-Step Generation
  */
-export const generateSticker = async (userPrompt: string, style: string, generationCount: number = 0, history: string[] = []): Promise<{imageUrl: string, concept: string}> => {
+export const IMAGE_MODELS = {
+  FLASH: 'gemini-2.5-flash-image',
+  PRO_PREVIEW: 'gemini-3-pro-image-preview'
+};
+
+/**
+ * ORCHESTRATOR: Two-Step Generation
+ */
+export const generateSticker = async (userPrompt: string, style: string, generationCount: number = 0, history: string[] = [], customImageModel: string = IMAGE_MODELS.FLASH): Promise<{imageUrl: string, concept: string}> => {
   try {
-    const imageModel = 'gemini-2.5-flash-image';
+    const imageModel = customImageModel;
     
     const seed = Date.now();
     

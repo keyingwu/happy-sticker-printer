@@ -1,5 +1,5 @@
 {
-  "name": "City Sticker Printer",
-  "description": "A fun, virtual sticker printer that generates comedic, tourist-style stickers for any city you visit using Gemini AI.",
+  "name": "Happy Sticker Printer",
+  "description": "A fun, virtual sticker printer that generates stickers using Gemini AI.",
   "requestFramePermissions": []
 }

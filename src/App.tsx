@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { generateSticker, STYLES } from './services/geminiService';
+import { generateSticker, STYLES, IMAGE_MODELS } from './services/geminiService';
 import { Printer } from './components/Printer';
 import { PlacedSticker, DragItem } from './types';
 
@@ -25,6 +25,7 @@ export default function App() {
   // Input State
   const [prompt, setPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState(STYLES[0]);
+  const [selectedModel, setSelectedModel] = useState(IMAGE_MODELS.FLASH);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isZipping, setIsZipping] = useState(false);
@@ -56,7 +57,7 @@ export default function App() {
 
     try {
       // Step 1 & 2: Call service with history
-      const { imageUrl, concept } = await generateSticker(prompt, selectedStyle, generationCount, conceptHistory);
+      const { imageUrl, concept } = await generateSticker(prompt, selectedStyle, generationCount, conceptHistory, selectedModel);
       
       // Store prompt alongside url for filename generation
       setFreshSticker({ url: imageUrl, prompt });
@@ -327,6 +328,23 @@ export default function App() {
                         />
                     </div>
                     
+                    {/* Row 1.5: Model Switcher */}
+                    <div className="w-full">
+                        <Select
+                            value={selectedModel}
+                            onValueChange={setSelectedModel}
+                            disabled={loading}
+                        >
+                            <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-7 text-xs text-slate-500">
+                                <SelectValue placeholder="Model" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white">
+                                 <SelectItem value={IMAGE_MODELS.FLASH} className="text-xs">Flash (Faster)</SelectItem>
+                                 <SelectItem value={IMAGE_MODELS.PRO_PREVIEW} className="text-xs">Pro (Better Quality)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
                     {/* Row 2: Style Select & Print Button */}
                     <div className="flex gap-3 w-full">
                         <div className="flex-1 min-w-0">
