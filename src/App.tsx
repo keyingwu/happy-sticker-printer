@@ -310,9 +310,10 @@ export default function App() {
                 onStartDragFresh={startDragFresh}
                 onDownloadFresh={() => freshSticker && downloadSticker(freshSticker.url, freshSticker.prompt)}
             >
-                <form onSubmit={handleGenerate} className="flex gap-3 items-center">
-                    <div className="flex-grow flex gap-2">
-                        <Input
+                <form onSubmit={handleGenerate} className="flex flex-col gap-4">
+                    {/* Row 1: Text Input (Full Width) */}
+                    <div className="w-full">
+                         <Input
                             type="text"
                             value={prompt}
                             onChange={(e) => {
@@ -321,34 +322,40 @@ export default function App() {
                                 setConceptHistory([]);
                             }}
                             placeholder="WHAT DO YOU WANT TO PRINT?"
-                            className="flex-grow bg-white text-lg font-bold border-2 border-slate-300 focus-visible:ring-indigo-500 uppercase tracking-wide placeholder:text-slate-300 text-slate-700 h-12"
                             disabled={loading}
                             autoFocus
                         />
-                        <Select
-                            value={selectedStyle}
-                            onValueChange={setSelectedStyle}
-                            disabled={loading}
-                        >
-                            <SelectTrigger className="w-[200px] h-12 bg-white border-2 border-slate-300 font-bold uppercase tracking-wide text-slate-700">
-                                <SelectValue placeholder="Style" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {STYLES.map((style) => (
-                                    <SelectItem key={style} value={style} className="uppercase font-bold text-xs">
-                                        {style.replace(/ style| illustration| sticker/gi, '')}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
                     </div>
-                    <Button
-                        type="submit"
-                        disabled={loading || !prompt}
-                        className={`h-12 px-8 text-lg font-black uppercase tracking-widest transition-all ${loading ? 'bg-slate-400' : 'bg-indigo-600 hover:bg-indigo-500 shadow-xl hover:shadow-2xl hover:-translate-y-1'}`}
-                    >
-                        {loading ? '...' : 'PRINT'}
-                    </Button>
+                    
+                    {/* Row 2: Style Select & Print Button */}
+                    <div className="flex gap-3 w-full">
+                        <div className="flex-1 min-w-0">
+                            <Select
+                                value={selectedStyle}
+                                onValueChange={setSelectedStyle}
+                                disabled={loading}
+                            >
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Style" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {STYLES.map((style) => (
+                                        <SelectItem key={style} value={style} className="uppercase font-bold text-xs">
+                                            {style.replace(/ style| illustration| sticker/gi, '')}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <Button
+                            type="submit"
+                            disabled={loading || !prompt}
+                            className="flex-1 min-w-0 h-10 bg-emerald-500 hover:bg-emerald-600 text-white font-black tracking-widest rounded transition-all border-none active:opacity-90"
+                        >
+                            {loading ? '...' : 'PRINT'}
+                        </Button>
+                    </div>
                 </form>
                 {error && <div className="text-xs text-red-500 mt-2 font-bold text-center tracking-wide">{error}</div>}
             </Printer>
