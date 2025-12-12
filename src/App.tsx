@@ -453,7 +453,7 @@ export default function App() {
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Style" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-white">
+                                <SelectContent className="bg-white max-h-[300px]">
                                     {STYLES.map((style) => (
                                         <SelectItem key={style} value={style} className="uppercase font-bold text-xs">
                                             {style.replace(/ style| illustration| sticker/gi, '')}

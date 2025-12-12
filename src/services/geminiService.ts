@@ -201,8 +201,7 @@ const generateConcept = async (userPrompt: string, history: string[]): Promise<s
         Rules:
         1. Return ONLY the short visual description (max 10 words).
         2. Be specific (e.g., instead of "Pizza", say "A slice of pepperoni pizza dripping cheese").
-        3. Make it funny or cute based on the request.
-        4. Do NOT repeat anything from the avoidance list.
+        3. Do NOT repeat anything from the avoidance list.
     `;
 
     try {
